@@ -1,0 +1,48 @@
+#!/bin/bash
+#Simple script that checks to see if the output of a program matches the expected output
+
+errorCheck(){
+  #if wrong amount of outputs given:
+  if [ ${#} -ne 2 ]; then
+     echo "runSuite expected 2 arguements, recieved: ${#}" >&2
+     exit 1
+  fi
+
+  #checks to see if all files containing expected input are there/readable before running tests
+  for Ofile in `cat ${1}`; do
+    infile=${Ofile}.in
+    outfile=${Ofile}.out
+    if [ ! -r ${infile} ]; then
+        echo "runSuite was not able to find or read a file required for testing." >&2
+        exit 1
+    fi
+    if [ ! -r ${outfile} ]; then
+        echo "runSuite was not able to find or read a file required for testing." >&2
+        exit 1
+    fi
+  done
+}
+
+runTest(){
+  #runs test, outputs the results of failed tests
+  for Ofile in `cat ${1}`; do
+    infile=${Ofile}.in
+    outfile=${Ofile}.out
+    tmpfile=mktemp
+    ./${2} < ${infile} | cat > ${tmpfile}
+    wrong=`cmp ${tmpfile} ${outfile}`
+    if [ ${?} -eq 1 ]; then
+      echo "Test failed:"
+      echo "Input:"
+      cat < ${infile}
+      echo "Expected:"
+      cat < ${outfile}
+      echo "Actual:"
+      cat < ${tmpfile}
+    rm ${tmpfile}
+    fi
+  done
+}
+
+errorCheck $@
+runTest $@
